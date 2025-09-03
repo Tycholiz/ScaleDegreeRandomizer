@@ -26,6 +26,7 @@ const ChordScaleRandomizer: React.FC = () => {
   const [lastCombination, setLastCombination] = useState<ScaleDegree | null>(null);
   const [detectedNote, setDetectedNote] = useState<string>('');
   const [noteStatus, setNoteStatus] = useState<'pending' | 'correct' | 'incorrect'>('pending');
+  const [hasFoundCorrect, setHasFoundCorrect] = useState(false);
   
   const audioContext = useRef<AudioContext | null>(null);
   const intervalId = useRef<number | null>(null);
@@ -209,9 +210,21 @@ const ChordScaleRandomizer: React.FC = () => {
       const { selectedKey: currentKey, currentScaleDegree: currentSD, mode: currentMode } = currentStateRef.current;
       const expectedNote = getExpectedNote(currentKey, currentSD.degree, currentMode);
       
+      const isCorrect = note === expectedNote;
+      
       setDetectedNote(note);
-      setNoteStatus(note === expectedNote ? 'correct' : 'incorrect');
-    } else {
+      
+      if (isCorrect && !hasFoundCorrect) {
+        // Found correct note for the first time - lock in green
+        setNoteStatus('correct');
+        setHasFoundCorrect(true);
+      } else if (!hasFoundCorrect) {
+        // Haven't found correct yet, show red for wrong notes
+        setNoteStatus('incorrect');
+      }
+      // If hasFoundCorrect is true, keep showing green (don't change status)
+    } else if (!hasFoundCorrect) {
+      // Only reset to pending if we haven't found correct yet
       setDetectedNote('');
       setNoteStatus('pending');
     }
@@ -283,9 +296,10 @@ const ChordScaleRandomizer: React.FC = () => {
     setLastCombination(newScaleDegree);
     lastCombinationRef.current = newScaleDegree; // Keep ref in sync
     
-    // Reset note detection state
+    // Reset note detection state for new scale degree
     setDetectedNote('');
     setNoteStatus('pending');
+    setHasFoundCorrect(false); // Reset the "found correct" flag
     
     playChord(newScaleDegree);
   };
