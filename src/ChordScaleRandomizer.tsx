@@ -26,6 +26,7 @@ const ChordScaleRandomizer: React.FC = () => {
   const audioContext = useRef<AudioContext | null>(null);
   const intervalId = useRef<number | null>(null);
   const currentOscillators = useRef<OscillatorNode[]>([]);
+  const lastCombinationRef = useRef<ScaleDegree | null>(null);
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -147,9 +148,9 @@ const ChordScaleRandomizer: React.FC = () => {
         newScaleDegree = { degree, direction };
       }
     } while (
-      lastCombination && 
-      newScaleDegree.degree === lastCombination.degree &&
-      newScaleDegree.direction === lastCombination.direction
+      lastCombinationRef.current && 
+      newScaleDegree.degree === lastCombinationRef.current.degree &&
+      newScaleDegree.direction === lastCombinationRef.current.direction
     );
 
     return newScaleDegree;
@@ -159,6 +160,7 @@ const ChordScaleRandomizer: React.FC = () => {
     const newScaleDegree = generateNewScaleDegree();
     setCurrentScaleDegree(newScaleDegree);
     setLastCombination(newScaleDegree);
+    lastCombinationRef.current = newScaleDegree; // Keep ref in sync
     playChord(newScaleDegree);
   };
 
