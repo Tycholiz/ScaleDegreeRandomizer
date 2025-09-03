@@ -183,7 +183,8 @@ const ChordScaleRandomizer: React.FC = () => {
         clearInterval(intervalId.current);
       }
     };
-  }, [isPlaying, interval]); // Only depend on isPlaying and interval
+  }, [isPlaying, interval, selectedKey, mode, volume, isMuted]); // Include all audio settings
+
 
   const formatScaleDegree = (scaleDegree: ScaleDegree): string => {
     if (scaleDegree.degree === 1 && !scaleDegree.direction) {
