@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 type Direction = 'ABOVE' | 'BELOW';
 type Mode = 'major' | 'minor';
@@ -13,6 +13,8 @@ const KEYS = [
   'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'
 ];
 
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
 const ChordScaleRandomizer: React.FC = () => {
   const [currentScaleDegree, setCurrentScaleDegree] = useState<ScaleDegree>({ degree: 1 });
   const [isPlaying, setIsPlaying] = useState(false);
@@ -22,11 +24,16 @@ const ChordScaleRandomizer: React.FC = () => {
   const [volume, setVolume] = useState(0.3);
   const [isMuted, setIsMuted] = useState(false);
   const [lastCombination, setLastCombination] = useState<ScaleDegree | null>(null);
+  const [detectedNote, setDetectedNote] = useState<string>('');
+  const [noteStatus, setNoteStatus] = useState<'pending' | 'correct' | 'incorrect'>('pending');
   
   const audioContext = useRef<AudioContext | null>(null);
   const intervalId = useRef<number | null>(null);
   const currentOscillators = useRef<OscillatorNode[]>([]);
   const lastCombinationRef = useRef<ScaleDegree | null>(null);
+  const microphoneStream = useRef<MediaStream | null>(null);
+  const analyser = useRef<AnalyserNode | null>(null);
+  const pitchDetectionId = useRef<number | null>(null);
 
   useEffect(() => {
     audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -36,6 +43,19 @@ const ChordScaleRandomizer: React.FC = () => {
       }
     };
   }, []);
+
+  const getExpectedNote = (keyName: string, scaleDegree: number, mode: Mode): string => {
+    const keyIndex = KEYS.findIndex(key => key === keyName);
+    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
+    const minorIntervals = [0, 2, 3, 5, 7, 8, 10];
+    const intervals = mode === 'major' ? majorIntervals : minorIntervals;
+    
+    const noteIndex = (keyIndex + intervals[scaleDegree - 1]) % 12;
+    const expectedNote = NOTE_NAMES[noteIndex];
+    
+    
+    return expectedNote;
+  };
 
   const getFrequency = (keyName: string, mode: Mode): number[] => {
     const keyIndex = KEYS.findIndex(key => key === keyName);
@@ -128,6 +148,107 @@ const ChordScaleRandomizer: React.FC = () => {
     });
   };
 
+  // Pitch detection functions
+  const frequencyToNote = (frequency: number): string => {
+    const A4 = 440;
+    
+    if (frequency <= 0) return '';
+    
+    // Calculate semitones from A4
+    const semitones = Math.round(12 * Math.log2(frequency / A4));
+    
+    // A4 is at index 9 in NOTE_NAMES (A = 9th note: C=0, C#=1, D=2, D#=3, E=4, F=5, F#=6, G=7, G#=8, A=9)
+    const noteIndex = (9 + semitones) % 12;
+    
+    // Handle negative modulo
+    const finalIndex = noteIndex < 0 ? noteIndex + 12 : noteIndex;
+    
+    
+    return NOTE_NAMES[finalIndex];
+  };
+
+  // Use refs to store current values for pitch detection
+  const currentStateRef = useRef({ selectedKey, currentScaleDegree, mode });
+  
+  // Update ref whenever state changes
+  useEffect(() => {
+    currentStateRef.current = { selectedKey, currentScaleDegree, mode };
+  }, [selectedKey, currentScaleDegree, mode]);
+
+  const detectPitch = useCallback(() => {
+    if (!analyser.current) return;
+    
+    const bufferLength = analyser.current.fftSize;
+    const buffer = new Float32Array(bufferLength);
+    analyser.current.getFloatTimeDomainData(buffer);
+    
+    // Simple autocorrelation for pitch detection
+    const sampleRate = audioContext.current!.sampleRate;
+    let maxCorrelation = 0;
+    let bestPeriod = 0;
+    
+    const minPeriod = Math.floor(sampleRate / 800); // ~800 Hz max
+    const maxPeriod = Math.floor(sampleRate / 80);  // ~80 Hz min
+    
+    for (let period = minPeriod; period < maxPeriod; period++) {
+      let correlation = 0;
+      for (let i = 0; i < bufferLength - period; i++) {
+        correlation += buffer[i] * buffer[i + period];
+      }
+      if (correlation > maxCorrelation) {
+        maxCorrelation = correlation;
+        bestPeriod = period;
+      }
+    }
+    
+    if (maxCorrelation > 0.01 && bestPeriod > 0) { // Threshold for signal detection
+      const frequency = sampleRate / bestPeriod;
+      const note = frequencyToNote(frequency);
+      
+      // Use current values from ref
+      const { selectedKey: currentKey, currentScaleDegree: currentSD, mode: currentMode } = currentStateRef.current;
+      const expectedNote = getExpectedNote(currentKey, currentSD.degree, currentMode);
+      
+      setDetectedNote(note);
+      setNoteStatus(note === expectedNote ? 'correct' : 'incorrect');
+    } else {
+      setDetectedNote('');
+      setNoteStatus('pending');
+    }
+  }, []); // No dependencies - function never changes
+
+  const startPitchDetection = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      microphoneStream.current = stream;
+      
+      const source = audioContext.current!.createMediaStreamSource(stream);
+      analyser.current = audioContext.current!.createAnalyser();
+      analyser.current.fftSize = 2048;
+      source.connect(analyser.current);
+      
+      const detect = () => {
+        detectPitch();
+        pitchDetectionId.current = requestAnimationFrame(detect);
+      };
+      detect();
+    } catch (error) {
+      console.error('Microphone access denied:', error);
+    }
+  };
+
+  const stopPitchDetection = () => {
+    if (pitchDetectionId.current) {
+      cancelAnimationFrame(pitchDetectionId.current);
+    }
+    if (microphoneStream.current) {
+      microphoneStream.current.getTracks().forEach(track => track.stop());
+      microphoneStream.current = null;
+    }
+    setDetectedNote('');
+    setNoteStatus('pending');
+  };
+
   const generateNewScaleDegree = (): ScaleDegree => {
     let newScaleDegree: ScaleDegree;
     
@@ -161,6 +282,11 @@ const ChordScaleRandomizer: React.FC = () => {
     setCurrentScaleDegree(newScaleDegree);
     setLastCombination(newScaleDegree);
     lastCombinationRef.current = newScaleDegree; // Keep ref in sync
+    
+    // Reset note detection state
+    setDetectedNote('');
+    setNoteStatus('pending');
+    
     playChord(newScaleDegree);
   };
 
@@ -171,6 +297,9 @@ const ChordScaleRandomizer: React.FC = () => {
     }
 
     if (isPlaying) {
+      // Start pitch detection
+      startPitchDetection();
+      
       // Perform initial randomize
       performRandomize();
       
@@ -178,12 +307,16 @@ const ChordScaleRandomizer: React.FC = () => {
       intervalId.current = window.setInterval(() => {
         performRandomize();
       }, interval * 1000);
+    } else {
+      // Stop pitch detection when not playing
+      stopPitchDetection();
     }
 
     return () => {
       if (intervalId.current) {
         clearInterval(intervalId.current);
       }
+      stopPitchDetection();
     };
   }, [isPlaying, interval, selectedKey, mode, volume, isMuted]); // Include all audio settings
 
@@ -212,6 +345,21 @@ const ChordScaleRandomizer: React.FC = () => {
               {selectedKey} {mode.charAt(0).toUpperCase() + mode.slice(1)}
             </div>
           </div>
+          
+          {/* Note Detection Indicator */}
+          {isPlaying && (
+            <div className="flex justify-center">
+              <div className={`px-6 py-3 rounded-xl font-bold text-white text-lg border-2 ${
+                noteStatus === 'pending' 
+                  ? 'bg-blue-500/70 border-blue-400' 
+                  : noteStatus === 'correct'
+                  ? 'bg-green-500/70 border-green-400'
+                  : 'bg-red-500/70 border-red-400'
+              }`}>
+                {detectedNote || '...'}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Controls */}
