@@ -958,12 +958,10 @@ const ChordScaleRandomizer: React.FC = () => {
                     <strong>"1"</strong> - Root note (tonic)
                   </li>
                   <li>
-                    <strong>"6 ABOVE"</strong> - 6th scale degree, one octave
-                    higher
+                    <strong>"6 ABOVE"</strong> - 6th scale degree above the root
                   </li>
                   <li>
-                    <strong>"3 BELOW"</strong> - 3rd scale degree, one octave
-                    lower
+                    <strong>"3 BELOW"</strong> - 3rd scale degree below the root
                   </li>
                 </ul>
               </div>
@@ -996,15 +994,37 @@ const ChordScaleRandomizer: React.FC = () => {
 
               <div className="bg-white/10 rounded-lg p-4">
                 <h3 className="text-lg font-semibold mb-2 text-white/90">
-                  Pro Tip
+                  Pro Tips
                 </h3>
-                <p>
-                  Focus on the <em>feeling</em> each scale degree creates
-                  against the underlying chord. The 1st feels stable and
-                  resolved, the 7th feels tense and wants to resolve up, the 5th
-                  feels strong and supportive. This functional understanding
-                  will make you a better musician!
-                </p>
+                <div className="space-y-3">
+                  <p>
+                    <strong>1.</strong> Focus on the <em>feeling</em> each scale
+                    degree creates against the underlying chord. The 1st feels
+                    stable and resolved, the 7th feels tense and wants to
+                    resolve up, the 5th feels strong and supportive. This
+                    functional understanding will make you a better musician!
+                  </p>
+                  <p>
+                    <strong>2.</strong>{" "}
+                    <strong>Prioritize accuracy over speed.</strong> When
+                    thinking about chord changes, they usually don't move more
+                    often than once every two seconds. However, scale degrees in
+                    guitar solos can be hit much more frequently. Regardless of
+                    tempo, accuracy is always more important than speed -
+                    develop precision first, then gradually increase your pace.
+                  </p>
+                  <p>
+                    <strong>3.</strong> <strong>Hum before you play.</strong>{" "}
+                    Try to hum the target note before hitting it on your
+                    instrument. This trains your ear to know what the note
+                    sounds like <em>before</em> you play it. Just hitting notes
+                    is useful, but you aren't teaching your ear what it sounds
+                    like beforehand. You might know where the note is in
+                    relation to the scale, but humming first develops your
+                    ability to hear it internally before confirming with your
+                    instrument.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
