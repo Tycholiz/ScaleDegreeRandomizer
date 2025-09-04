@@ -609,7 +609,7 @@ const ChordScaleRandomizer: React.FC = () => {
                     </label>
                     <input
                       type="range"
-                      min="0.5"
+                      min="1"
                       max="5"
                       step="0.25"
                       value={interval}
@@ -786,63 +786,51 @@ const ChordScaleRandomizer: React.FC = () => {
             {isPlaying ? "Stop" : "Start"}
           </button>
 
-          {/* Accuracy Tracking */}
-          {(() => {
-            console.log("Checking results for UI render:", {
-              results,
-              length: results.length,
-            });
-            return results.length > 0;
-          })() && (
-            <>
-              {/* Accuracy Percentage */}
-              <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4">
-                <div className="text-xl font-bold text-white text-center mb-2">
-                  Accuracy: {calculateAccuracy()}%
-                </div>
-                <div className="text-sm text-white/70 text-center">
-                  {results.filter((r) => r).length} correct out of{" "}
-                  {results.length} attempts
-                </div>
+          {/* Results Section - Always visible to prevent layout shift */}
+          <div className="backdrop-blur-lg bg-white/20 rounded-xl border border-white/30 p-4">
+            <div className="flex justify-between items-center mb-3">
+              <div className="text-white text-sm font-medium">
+                Results {results.length > 0 && `- ${calculateAccuracy()}% accurate`}
               </div>
-
-              {/* Results List */}
-              <div className="backdrop-blur-lg bg-white/20 rounded-xl border border-white/30 p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <div className="text-white text-sm font-medium">Results</div>
-                  <button
-                    onClick={() => {
-                      setResults([]);
-                      // Reset detection state so no new results are recorded until user plays first note again
-                      hasDetectedFirstNoteRef.current = false;
-                      everFoundCorrectForCurrentDegree.current = false;
-                      isFirstScaleDegree.current = true;
-                      // Reset duration tracking
-                      currentDetectedNoteRef.current = null;
-                      noteDetectionStartTimeRef.current = null;
-                    }}
-                    className="px-3 py-1 text-xs bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+              {results.length > 0 && (
+                <button
+                  onClick={() => {
+                    setResults([]);
+                    // Reset detection state so no new results are recorded until user plays first note again
+                    hasDetectedFirstNoteRef.current = false;
+                    everFoundCorrectForCurrentDegree.current = false;
+                    isFirstScaleDegree.current = true;
+                    // Reset duration tracking
+                    currentDetectedNoteRef.current = null;
+                    noteDetectionStartTimeRef.current = null;
+                  }}
+                  className="px-3 py-1 text-xs bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center min-h-[2rem]">
+              {results.length > 0 ? (
+                results.map((isCorrect, index) => (
+                  <div
+                    key={index}
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg ${
+                      isCorrect
+                        ? "bg-green-500/70 border-green-400 text-white"
+                        : "bg-red-500/70 border-red-400 text-white"
+                    } border-2`}
                   >
-                    Reset
-                  </button>
+                    {isCorrect ? "✓" : "✕"}
+                  </div>
+                ))
+              ) : (
+                <div className="text-white/50 text-sm text-center py-2">
+                  Your accuracy results will appear here
                 </div>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {results.map((isCorrect, index) => (
-                    <div
-                      key={index}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-lg ${
-                        isCorrect
-                          ? "bg-green-500/70 border-green-400 text-white"
-                          : "bg-red-500/70 border-red-400 text-white"
-                      } border-2`}
-                    >
-                      {isCorrect ? "✓" : "✕"}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
