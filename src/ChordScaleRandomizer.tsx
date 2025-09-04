@@ -126,6 +126,29 @@ const ChordScaleRandomizer: React.FC = () => {
     };
   }, [isPlaying]); // Add isPlaying as dependency since we're using it in the handler
 
+  // Click outside handler for settings dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showSettingsMenu) {
+        // Check if the click was outside the settings dropdown
+        const target = event.target as Element;
+        const dropdown = document.getElementById('settings-dropdown');
+        const button = document.getElementById('settings-button');
+        
+        if (dropdown && button && 
+            !dropdown.contains(target) && 
+            !button.contains(target)) {
+          setShowSettingsMenu(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSettingsMenu]);
+
   const getExpectedNote = (
     keyName: string,
     scaleDegree: number,
@@ -562,6 +585,7 @@ const ChordScaleRandomizer: React.FC = () => {
             </button>
             <div className="relative">
               <button
+                id="settings-button"
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
               >
@@ -574,7 +598,10 @@ const ChordScaleRandomizer: React.FC = () => {
 
               {/* Settings Dropdown */}
               {showSettingsMenu && (
-                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl z-10 p-4 space-y-4">
+                <div 
+                  id="settings-dropdown"
+                  className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl z-10 p-4 space-y-4"
+                >
                   {/* Interval Control */}
                   <div>
                     <label className="block text-gray-700 text-sm font-medium mb-3">
@@ -821,8 +848,14 @@ const ChordScaleRandomizer: React.FC = () => {
 
       {/* User Manual Modal */}
       {showUserManual && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+          onClick={() => setShowUserManual(false)}
+        >
+          <div 
+            className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">User Manual</h2>
               <button
