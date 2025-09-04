@@ -542,9 +542,9 @@ const ChordScaleRandomizer: React.FC = () => {
       <div className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white drop-shadow-lg mb-4">
-            Chord Scale Randomizer
+            Scale Degree Randomizer
           </h1>
-          <div className="flex justify-center gap-4">
+          <div className="flex justify-between gap-4">
             <button
               onClick={() => setShowUserManual(true)}
               className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
@@ -798,7 +798,7 @@ const ChordScaleRandomizer: React.FC = () => {
       {showUserManual && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex justify-between mb-6">
               <h2 className="text-2xl font-bold text-white">User Manual</h2>
               <button
                 onClick={() => setShowUserManual(false)}
