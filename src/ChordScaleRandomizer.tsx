@@ -110,7 +110,9 @@ const ChordScaleRandomizer: React.FC = () => {
             setIsPlaying(true);
           } catch (error) {
             // Microphone access denied or not available
-            alert("Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again.");
+            alert(
+              "Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again."
+            );
             return;
           }
         } else {
@@ -132,20 +134,23 @@ const ChordScaleRandomizer: React.FC = () => {
       if (showSettingsMenu) {
         // Check if the click was outside the settings dropdown
         const target = event.target as Element;
-        const dropdown = document.getElementById('settings-dropdown');
-        const button = document.getElementById('settings-button');
-        
-        if (dropdown && button && 
-            !dropdown.contains(target) && 
-            !button.contains(target)) {
+        const dropdown = document.getElementById("settings-dropdown");
+        const button = document.getElementById("settings-button");
+
+        if (
+          dropdown &&
+          button &&
+          !dropdown.contains(target) &&
+          !button.contains(target)
+        ) {
           setShowSettingsMenu(false);
         }
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSettingsMenu]);
 
@@ -598,7 +603,7 @@ const ChordScaleRandomizer: React.FC = () => {
 
               {/* Settings Dropdown */}
               {showSettingsMenu && (
-                <div 
+                <div
                   id="settings-dropdown"
                   className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl z-10 p-4 space-y-4"
                 >
@@ -773,7 +778,9 @@ const ChordScaleRandomizer: React.FC = () => {
                   setIsPlaying(true);
                 } catch (error) {
                   // Microphone access denied or not available
-                  alert("Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again.");
+                  alert(
+                    "Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again."
+                  );
                   return;
                 }
               } else {
@@ -790,7 +797,8 @@ const ChordScaleRandomizer: React.FC = () => {
           <div className="backdrop-blur-lg bg-white/20 rounded-xl border border-white/30 p-4">
             <div className="flex justify-between items-center mb-3">
               <div className="text-white text-sm font-medium">
-                Results {results.length > 0 && `- ${calculateAccuracy()}% accurate`}
+                Results{" "}
+                {results.length > 0 && `- ${calculateAccuracy()}% accurate`}
               </div>
               {results.length > 0 && (
                 <button
@@ -836,11 +844,11 @@ const ChordScaleRandomizer: React.FC = () => {
 
       {/* User Manual Modal */}
       {showUserManual && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
           onClick={() => setShowUserManual(false)}
         >
-          <div 
+          <div
             className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
@@ -958,6 +966,32 @@ const ChordScaleRandomizer: React.FC = () => {
                     lower
                   </li>
                 </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  Guitar Players
+                </h3>
+                <p className="mb-3">
+                  <strong>Explore Different Positions:</strong> Don't get
+                  comfortable playing scale degrees in just one position! For
+                  example, if you're playing the <strong>2nd degree</strong> two
+                  frets up from the root, also try playing it three frets down
+                  and one string up.
+                </p>
+                <p className="mb-3">
+                  <strong>Mix and Match Shapes:</strong> Once you find a
+                  comfortable <strong>2nd degree</strong> in an alternate
+                  position, try playing the <strong>5th degree</strong> two
+                  frets down and one string down from there. This builds
+                  proficiency across different scale shapes and positions.
+                </p>
+                <p>
+                  <strong>Master Your Key:</strong> The goal is to know your way
+                  around whatever key you're playing in, regardless of position
+                  or scale shape. This develops true fretboard mastery and
+                  musical fluency.
+                </p>
               </div>
 
               <div className="bg-white/10 rounded-lg p-4">
