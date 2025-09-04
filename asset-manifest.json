@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/scale-degree-randomizer/static/css/main.6444110a.css",
+    "main.js": "/scale-degree-randomizer/static/js/main.9d5755e4.js",
+    "static/js/453.96453769.chunk.js": "/scale-degree-randomizer/static/js/453.96453769.chunk.js",
+    "index.html": "/scale-degree-randomizer/index.html",
+    "main.6444110a.css.map": "/scale-degree-randomizer/static/css/main.6444110a.css.map",
+    "main.9d5755e4.js.map": "/scale-degree-randomizer/static/js/main.9d5755e4.js.map",
+    "453.96453769.chunk.js.map": "/scale-degree-randomizer/static/js/453.96453769.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6444110a.css",
+    "static/js/main.9d5755e4.js"
+  ]
+}
