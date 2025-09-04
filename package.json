@@ -1,6 +1,6 @@
 {
   "name": "my-app",
-  "homepage": "https://tycholiz.github.io/ScaleDegreeRandomizer",
+  "homepage": "https://scale-degree-randomizer.com",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
