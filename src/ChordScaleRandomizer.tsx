@@ -87,13 +87,16 @@ const ChordScaleRandomizer: React.FC = () => {
 
   // Keyboard controls
   useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
+    const handleKeyPress = async (event: KeyboardEvent) => {
       if (event.code === "Space") {
         event.preventDefault(); // Prevent page scrolling
 
         // Toggle play state
-        setIsPlaying((prev) => {
-          if (!prev) {
+        if (!isPlaying) {
+          // Check microphone access before starting
+          try {
+            await navigator.mediaDevices.getUserMedia({ audio: true });
+            // If we get here, mic access is granted
             // Starting - reset all detection and results
             setResults([]);
             hasDetectedFirstNoteRef.current = false;
@@ -104,9 +107,16 @@ const ChordScaleRandomizer: React.FC = () => {
             setHasFoundCorrect(false);
             setDetectedNote("");
             setNoteStatus("pending");
+            setIsPlaying(true);
+          } catch (error) {
+            // Microphone access denied or not available
+            alert("Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again.");
+            return;
           }
-          return !prev;
-        });
+        } else {
+          // Stopping
+          setIsPlaying(false);
+        }
       }
     };
 
@@ -114,7 +124,7 @@ const ChordScaleRandomizer: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyPress);
     };
-  }, []);
+  }, [isPlaying]); // Add isPlaying as dependency since we're using it in the handler
 
   const getExpectedNote = (
     keyName: string,
@@ -717,20 +727,32 @@ const ChordScaleRandomizer: React.FC = () => {
         <div className="space-y-6">
           {/* Play/Stop Button */}
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!isPlaying) {
-                // Starting - reset all detection and results
-                setResults([]);
-                hasDetectedFirstNoteRef.current = false;
-                everFoundCorrectForCurrentDegree.current = false;
-                isFirstScaleDegree.current = true;
-                currentDetectedNoteRef.current = null;
-                noteDetectionStartTimeRef.current = null;
-                setHasFoundCorrect(false);
-                setDetectedNote("");
-                setNoteStatus("pending");
+                // Check microphone access before starting
+                try {
+                  await navigator.mediaDevices.getUserMedia({ audio: true });
+                  // If we get here, mic access is granted
+                  // Starting - reset all detection and results
+                  setResults([]);
+                  hasDetectedFirstNoteRef.current = false;
+                  everFoundCorrectForCurrentDegree.current = false;
+                  isFirstScaleDegree.current = true;
+                  currentDetectedNoteRef.current = null;
+                  noteDetectionStartTimeRef.current = null;
+                  setHasFoundCorrect(false);
+                  setDetectedNote("");
+                  setNoteStatus("pending");
+                  setIsPlaying(true);
+                } catch (error) {
+                  // Microphone access denied or not available
+                  alert("Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again.");
+                  return;
+                }
+              } else {
+                // Stopping
+                setIsPlaying(false);
               }
-              setIsPlaying(!isPlaying);
             }}
             className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
           >
