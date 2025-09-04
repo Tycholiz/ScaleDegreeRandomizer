@@ -57,6 +57,7 @@ const ChordScaleRandomizer: React.FC = () => {
   >("pending");
   const [hasFoundCorrect, setHasFoundCorrect] = useState(false);
   const [results, setResults] = useState<boolean[]>([]); // true = correct, false = incorrect
+  const [showUserManual, setShowUserManual] = useState(false);
   const hasDetectedFirstNoteRef = useRef(false);
   const everFoundCorrectForCurrentDegree = useRef(false);
 
@@ -538,9 +539,17 @@ const ChordScaleRandomizer: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
       <div className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-white text-center mb-8 drop-shadow-lg">
-          Chord Scale Randomizer
-        </h1>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white drop-shadow-lg mb-4">
+            Chord Scale Randomizer
+          </h1>
+          <button
+            onClick={() => setShowUserManual(true)}
+            className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
+          >
+            User Manual
+          </button>
+        </div>
 
         {/* Scale Degree Display */}
         <div className="text-center mb-8">
@@ -744,6 +753,76 @@ const ChordScaleRandomizer: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* User Manual Modal */}
+      {showUserManual && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="backdrop-blur-xl bg-white/20 rounded-3xl border border-white/30 shadow-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">User Manual</h2>
+              <button
+                onClick={() => setShowUserManual(false)}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg border border-white/30 transition-all"
+              >
+                Close
+              </button>
+            </div>
+            
+            <div className="text-white space-y-4 text-sm leading-relaxed">
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">Purpose</h3>
+                <p>
+                  This Chord Scale Randomizer is designed to help you learn to recognize different scale degrees by their <strong>functional purpose</strong> rather than by name. For example, it makes more sense to learn a chord as a <strong>V</strong> than it does to learn it as a <strong>G</strong>. "V" indicates the function of the chord, whereas "G" just identifies it as its pitch.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">Why Scale Degrees Matter</h3>
+                <p>
+                  When you learn to recognize scale degrees, it gives you more musical control because you recognize what a <strong>6</strong> sounds like against a <strong>1</strong>. You hear what a <strong>3</strong> sounds like against a <strong>1</strong> and how these notes relate to each other functionally within the key.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">The Importance of the Underlying Chord</h3>
+                <p>
+                  The key's chord plays underneath each scale degree to accentuate that a <strong>1</strong> sounds a certain way over the chord and a <strong>5</strong> sounds a certain way over the chord. Having this harmonic foundation is vitally important because it establishes the tonal center and helps your ear understand the relationship between each scale degree and the key.
+                </p>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">How to Use</h3>
+                <ul className="space-y-2 ml-4">
+                  <li><strong>1.</strong> Press <span className="bg-white/20 px-2 py-1 rounded">Space Bar</span> or click "Start Auto-Randomizer"</li>
+                  <li><strong>2.</strong> Allow microphone access when prompted</li>
+                  <li><strong>3.</strong> Listen to the chord and see the scale degree displayed (e.g., "6 ABOVE")</li>
+                  <li><strong>4.</strong> Sing or play the corresponding note on your instrument</li>
+                  <li><strong>5.</strong> The note detection will show green for correct, red for incorrect</li>
+                  <li><strong>6.</strong> Your accuracy is tracked with checkmarks (✓) and X's (✕)</li>
+                  <li><strong>7.</strong> Adjust the interval speed using the slider</li>
+                  <li><strong>8.</strong> Try different keys and modes (major/minor)</li>
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">Scale Degree Notation</h3>
+                <ul className="space-y-1 ml-4">
+                  <li><strong>"1"</strong> - Root note (tonic)</li>
+                  <li><strong>"6 ABOVE"</strong> - 6th scale degree, one octave higher</li>
+                  <li><strong>"3 BELOW"</strong> - 3rd scale degree, one octave lower</li>
+                </ul>
+              </div>
+
+              <div className="bg-white/10 rounded-lg p-4">
+                <h3 className="text-lg font-semibold mb-2 text-white/90">Pro Tip</h3>
+                <p>
+                  Focus on the <em>feeling</em> each scale degree creates against the underlying chord. The 1st feels stable and resolved, the 7th feels tense and wants to resolve up, the 5th feels strong and supportive. This functional understanding will make you a better musician!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
