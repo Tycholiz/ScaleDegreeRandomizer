@@ -611,7 +611,7 @@ const ChordScaleRandomizer: React.FC = () => {
                       type="range"
                       min="0.5"
                       max="5"
-                      step="0.5"
+                      step="0.25"
                       value={interval}
                       onChange={(e) => {
                         setInterval(parseFloat(e.target.value));
