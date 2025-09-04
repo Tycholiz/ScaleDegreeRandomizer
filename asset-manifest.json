@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/ScaleDegreeRandomizer/static/css/main.6444110a.css",
-    "main.js": "/ScaleDegreeRandomizer/static/js/main.eb0fa968.js",
+    "main.js": "/ScaleDegreeRandomizer/static/js/main.f9473040.js",
     "static/js/453.96453769.chunk.js": "/ScaleDegreeRandomizer/static/js/453.96453769.chunk.js",
     "index.html": "/ScaleDegreeRandomizer/index.html",
     "main.6444110a.css.map": "/ScaleDegreeRandomizer/static/css/main.6444110a.css.map",
-    "main.eb0fa968.js.map": "/ScaleDegreeRandomizer/static/js/main.eb0fa968.js.map",
+    "main.f9473040.js.map": "/ScaleDegreeRandomizer/static/js/main.f9473040.js.map",
     "453.96453769.chunk.js.map": "/ScaleDegreeRandomizer/static/js/453.96453769.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.6444110a.css",
-    "static/js/main.eb0fa968.js"
+    "static/js/main.f9473040.js"
   ]
 }
