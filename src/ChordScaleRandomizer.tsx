@@ -577,7 +577,10 @@ const ChordScaleRandomizer: React.FC = () => {
                       max="5"
                       step="0.5"
                       value={interval}
-                      onChange={(e) => setInterval(parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        setInterval(parseFloat(e.target.value));
+                        setIsPlaying(false);
+                      }}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                     />
                   </div>
@@ -589,7 +592,10 @@ const ChordScaleRandomizer: React.FC = () => {
                     </label>
                     <select
                       value={selectedKey}
-                      onChange={(e) => setSelectedKey(e.target.value)}
+                      onChange={(e) => {
+                        setSelectedKey(e.target.value);
+                        setIsPlaying(false);
+                      }}
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       {KEYS.map((key) => (
@@ -607,7 +613,10 @@ const ChordScaleRandomizer: React.FC = () => {
                     </label>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => setMode("major")}
+                        onClick={() => {
+                          setMode("major");
+                          setIsPlaying(false);
+                        }}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                           mode === "major"
                             ? "bg-blue-500 text-white shadow-lg"
@@ -617,7 +626,10 @@ const ChordScaleRandomizer: React.FC = () => {
                         Major
                       </button>
                       <button
-                        onClick={() => setMode("minor")}
+                        onClick={() => {
+                          setMode("minor");
+                          setIsPlaying(false);
+                        }}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                           mode === "minor"
                             ? "bg-blue-500 text-white shadow-lg"
@@ -636,7 +648,10 @@ const ChordScaleRandomizer: React.FC = () => {
                         Volume
                       </label>
                       <button
-                        onClick={() => setIsMuted(!isMuted)}
+                        onClick={() => {
+                          setIsMuted(!isMuted);
+                          setIsPlaying(false);
+                        }}
                         className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
                           isMuted
                             ? "bg-red-500 text-white"
@@ -652,7 +667,10 @@ const ChordScaleRandomizer: React.FC = () => {
                       max="1"
                       step="0.1"
                       value={volume}
-                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      onChange={(e) => {
+                        setVolume(parseFloat(e.target.value));
+                        setIsPlaying(false);
+                      }}
                       disabled={isMuted}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:cursor-not-allowed disabled:opacity-50"
                     />
