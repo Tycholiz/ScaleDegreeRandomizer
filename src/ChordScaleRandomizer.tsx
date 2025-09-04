@@ -731,7 +731,7 @@ const ChordScaleRandomizer: React.FC = () => {
             }}
             className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
           >
-            {isPlaying ? "Stop" : "Start"} Auto-Randomizer
+            {isPlaying ? "Stop" : "Start"}
           </button>
 
           {/* Accuracy Tracking */}
@@ -863,7 +863,7 @@ const ChordScaleRandomizer: React.FC = () => {
                     <span className="bg-white/20 px-2 py-1 rounded">
                       Space Bar
                     </span>{" "}
-                    or click "Start Auto-Randomizer"
+                    or click "Start"
                   </li>
                   <li>
                     <strong>2.</strong> Allow microphone access when prompted
