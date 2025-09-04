@@ -341,7 +341,6 @@ const ChordScaleRandomizer: React.FC = () => {
           });
 
           const isCorrect = note === expectedNote;
-
           setDetectedNote(note);
 
           if (isCorrect && !hasFoundCorrect) {
