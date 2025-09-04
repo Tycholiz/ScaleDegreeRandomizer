@@ -58,6 +58,7 @@ const ChordScaleRandomizer: React.FC = () => {
   const [hasFoundCorrect, setHasFoundCorrect] = useState(false);
   const [results, setResults] = useState<boolean[]>([]); // true = correct, false = incorrect
   const [showUserManual, setShowUserManual] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const hasDetectedFirstNoteRef = useRef(false);
   const everFoundCorrectForCurrentDegree = useRef(false);
 
@@ -543,12 +544,123 @@ const ChordScaleRandomizer: React.FC = () => {
           <h1 className="text-3xl font-bold text-white drop-shadow-lg mb-4">
             Chord Scale Randomizer
           </h1>
-          <button
-            onClick={() => setShowUserManual(true)}
-            className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
-          >
-            User Manual
-          </button>
+          <div className="flex justify-center gap-4">
+            <button
+              onClick={() => setShowUserManual(true)}
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
+            >
+              User Manual
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white text-sm rounded-lg border border-white/30 transition-all"
+              >
+                <div className="flex flex-col gap-1">
+                  <div className="w-4 h-0.5 bg-white"></div>
+                  <div className="w-4 h-0.5 bg-white"></div>
+                  <div className="w-4 h-0.5 bg-white"></div>
+                </div>
+              </button>
+
+              {/* Settings Dropdown */}
+              {showSettingsMenu && (
+                <div className="absolute top-full right-0 mt-2 w-80 bg-white rounded-xl border border-gray-200 shadow-xl z-10 p-4 space-y-4">
+                  {/* Interval Control */}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-medium mb-3">
+                      Interval: {interval}s
+                    </label>
+                    <input
+                      type="range"
+                      min="0.5"
+                      max="5"
+                      step="0.5"
+                      value={interval}
+                      onChange={(e) => setInterval(parseFloat(e.target.value))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+                    />
+                  </div>
+
+                  {/* Key Selection */}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-medium mb-3">
+                      Key
+                    </label>
+                    <select
+                      value={selectedKey}
+                      onChange={(e) => setSelectedKey(e.target.value)}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {KEYS.map((key) => (
+                        <option key={key} value={key} className="bg-white">
+                          {key}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Mode Selection */}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-medium mb-3">
+                      Mode
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setMode("major")}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                          mode === "major"
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Major
+                      </button>
+                      <button
+                        onClick={() => setMode("minor")}
+                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                          mode === "minor"
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        Minor
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Volume Control */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-gray-700 text-sm font-medium">
+                        Volume
+                      </label>
+                      <button
+                        onClick={() => setIsMuted(!isMuted)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
+                          isMuted
+                            ? "bg-red-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {isMuted ? "Muted" : "Unmuted"}
+                      </button>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.1"
+                      value={volume}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      disabled={isMuted}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Scale Degree Display */}
@@ -603,96 +715,6 @@ const ChordScaleRandomizer: React.FC = () => {
           >
             {isPlaying ? "Stop" : "Start"} Auto-Randomizer
           </button>
-
-          {/* Interval Control */}
-          <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4">
-            <label className="block text-white text-sm font-medium mb-3">
-              Interval: {interval}s
-            </label>
-            <input
-              type="range"
-              min="0.5"
-              max="5"
-              step="0.5"
-              value={interval}
-              onChange={(e) => setInterval(parseFloat(e.target.value))}
-              className="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-
-          {/* Key Selection */}
-          <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4">
-            <label className="block text-white text-sm font-medium mb-3">
-              Key
-            </label>
-            <select
-              value={selectedKey}
-              onChange={(e) => setSelectedKey(e.target.value)}
-              className="w-full p-3 bg-white/30 backdrop-blur-sm border border-white/40 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {KEYS.map((key) => (
-                <option key={key} value={key} className="bg-gray-800">
-                  {key}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Mode Selection */}
-          <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4">
-            <label className="block text-white text-sm font-medium mb-3">
-              Mode
-            </label>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setMode("major")}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                  mode === "major"
-                    ? "bg-white/40 text-white shadow-lg"
-                    : "bg-white/10 text-white/70 hover:bg-white/20"
-                }`}
-              >
-                Major
-              </button>
-              <button
-                onClick={() => setMode("minor")}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
-                  mode === "minor"
-                    ? "bg-white/40 text-white shadow-lg"
-                    : "bg-white/10 text-white/70 hover:bg-white/20"
-                }`}
-              >
-                Minor
-              </button>
-            </div>
-          </div>
-
-          {/* Volume Control */}
-          <div className="backdrop-blur-lg bg-white/20 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <label className="text-white text-sm font-medium">Volume</label>
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${
-                  isMuted
-                    ? "bg-red-500/50 text-white"
-                    : "bg-white/20 text-white hover:bg-white/30"
-                }`}
-              >
-                {isMuted ? "Muted" : "Unmuted"}
-              </button>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.1"
-              value={volume}
-              onChange={(e) => setVolume(parseFloat(e.target.value))}
-              disabled={isMuted}
-              className="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer slider disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </div>
 
           {/* Accuracy Tracking */}
           {(() => {
@@ -767,56 +789,123 @@ const ChordScaleRandomizer: React.FC = () => {
                 Close
               </button>
             </div>
-            
+
             <div className="text-white space-y-4 text-sm leading-relaxed">
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-white/90">Purpose</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  Purpose
+                </h3>
                 <p>
-                  This Chord Scale Randomizer is designed to help you learn to recognize different scale degrees by their <strong>functional purpose</strong> rather than by name. For example, it makes more sense to learn a chord as a <strong>V</strong> than it does to learn it as a <strong>G</strong>. "V" indicates the function of the chord, whereas "G" just identifies it as its pitch.
+                  This Chord Scale Randomizer is designed to help you learn to
+                  recognize different scale degrees by their{" "}
+                  <strong>functional purpose</strong> rather than by name. For
+                  example, it makes more sense to learn a chord as a{" "}
+                  <strong>V</strong> than it does to learn it as a{" "}
+                  <strong>G</strong>. "V" indicates the function of the chord,
+                  whereas "G" just identifies it as its pitch.
                 </p>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-white/90">Why Scale Degrees Matter</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  Why Scale Degrees Matter
+                </h3>
                 <p>
-                  When you learn to recognize scale degrees, it gives you more musical control because you recognize what a <strong>6</strong> sounds like against a <strong>1</strong>. You hear what a <strong>3</strong> sounds like against a <strong>1</strong> and how these notes relate to each other functionally within the key.
+                  When you learn to recognize scale degrees, it gives you more
+                  musical control because you recognize what a{" "}
+                  <strong>6</strong> sounds like against a <strong>1</strong>.
+                  You hear what a <strong>3</strong> sounds like against a{" "}
+                  <strong>1</strong> and how these notes relate to each other
+                  functionally within the key.
                 </p>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-white/90">The Importance of the Underlying Chord</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  The Importance of the Underlying Chord
+                </h3>
                 <p>
-                  The key's chord plays underneath each scale degree to accentuate that a <strong>1</strong> sounds a certain way over the chord and a <strong>5</strong> sounds a certain way over the chord. Having this harmonic foundation is vitally important because it establishes the tonal center and helps your ear understand the relationship between each scale degree and the key.
+                  The key's chord plays underneath each scale degree to
+                  accentuate that a <strong>1</strong> sounds a certain way over
+                  the chord and a <strong>5</strong> sounds a certain way over
+                  the chord. Having this harmonic foundation is vitally
+                  important because it establishes the tonal center and helps
+                  your ear understand the relationship between each scale degree
+                  and the key.
                 </p>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-white/90">How to Use</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  How to Use
+                </h3>
                 <ul className="space-y-2 ml-4">
-                  <li><strong>1.</strong> Press <span className="bg-white/20 px-2 py-1 rounded">Space Bar</span> or click "Start Auto-Randomizer"</li>
-                  <li><strong>2.</strong> Allow microphone access when prompted</li>
-                  <li><strong>3.</strong> Listen to the chord and see the scale degree displayed (e.g., "6 ABOVE")</li>
-                  <li><strong>4.</strong> Sing or play the corresponding note on your instrument</li>
-                  <li><strong>5.</strong> The note detection will show green for correct, red for incorrect</li>
-                  <li><strong>6.</strong> Your accuracy is tracked with checkmarks (✓) and X's (✕)</li>
-                  <li><strong>7.</strong> Adjust the interval speed using the slider</li>
-                  <li><strong>8.</strong> Try different keys and modes (major/minor)</li>
+                  <li>
+                    <strong>1.</strong> Press{" "}
+                    <span className="bg-white/20 px-2 py-1 rounded">
+                      Space Bar
+                    </span>{" "}
+                    or click "Start Auto-Randomizer"
+                  </li>
+                  <li>
+                    <strong>2.</strong> Allow microphone access when prompted
+                  </li>
+                  <li>
+                    <strong>3.</strong> Listen to the chord and see the scale
+                    degree displayed (e.g., "6 ABOVE")
+                  </li>
+                  <li>
+                    <strong>4.</strong> Sing or play the corresponding note on
+                    your instrument
+                  </li>
+                  <li>
+                    <strong>5.</strong> The note detection will show green for
+                    correct, red for incorrect
+                  </li>
+                  <li>
+                    <strong>6.</strong> Your accuracy is tracked with checkmarks
+                    (✓) and X's (✕)
+                  </li>
+                  <li>
+                    <strong>7.</strong> Adjust the interval speed using the
+                    slider
+                  </li>
+                  <li>
+                    <strong>8.</strong> Try different keys and modes
+                    (major/minor)
+                  </li>
                 </ul>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold mb-2 text-white/90">Scale Degree Notation</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  Scale Degree Notation
+                </h3>
                 <ul className="space-y-1 ml-4">
-                  <li><strong>"1"</strong> - Root note (tonic)</li>
-                  <li><strong>"6 ABOVE"</strong> - 6th scale degree, one octave higher</li>
-                  <li><strong>"3 BELOW"</strong> - 3rd scale degree, one octave lower</li>
+                  <li>
+                    <strong>"1"</strong> - Root note (tonic)
+                  </li>
+                  <li>
+                    <strong>"6 ABOVE"</strong> - 6th scale degree, one octave
+                    higher
+                  </li>
+                  <li>
+                    <strong>"3 BELOW"</strong> - 3rd scale degree, one octave
+                    lower
+                  </li>
                 </ul>
               </div>
 
               <div className="bg-white/10 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-2 text-white/90">Pro Tip</h3>
+                <h3 className="text-lg font-semibold mb-2 text-white/90">
+                  Pro Tip
+                </h3>
                 <p>
-                  Focus on the <em>feeling</em> each scale degree creates against the underlying chord. The 1st feels stable and resolved, the 7th feels tense and wants to resolve up, the 5th feels strong and supportive. This functional understanding will make you a better musician!
+                  Focus on the <em>feeling</em> each scale degree creates
+                  against the underlying chord. The 1st feels stable and
+                  resolved, the 7th feels tense and wants to resolve up, the 5th
+                  feels strong and supportive. This functional understanding
+                  will make you a better musician!
                 </p>
               </div>
             </div>
