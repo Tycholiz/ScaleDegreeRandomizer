@@ -60,6 +60,11 @@ const ChordScaleRandomizer: React.FC = () => {
   const hasDetectedFirstNoteRef = useRef(false);
   const everFoundCorrectForCurrentDegree = useRef(false);
 
+  // Duration-based note detection to avoid false positives from noise
+  const currentDetectedNoteRef = useRef<string | null>(null);
+  const noteDetectionStartTimeRef = useRef<number | null>(null);
+  const DETECTION_DURATION_MS = 150; // Note must be held for 500ms to register
+
   const audioContext = useRef<AudioContext | null>(null);
   const intervalId = useRef<number | null>(null);
   const currentOscillators = useRef<OscillatorNode[]>([]);
@@ -75,6 +80,37 @@ const ChordScaleRandomizer: React.FC = () => {
       if (audioContext.current) {
         audioContext.current.close();
       }
+    };
+  }, []);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault(); // Prevent page scrolling
+
+        // Toggle play state
+        setIsPlaying((prev) => {
+          if (!prev) {
+            // Starting - reset all detection and results
+            setResults([]);
+            hasDetectedFirstNoteRef.current = false;
+            everFoundCorrectForCurrentDegree.current = false;
+            isFirstScaleDegree.current = true;
+            currentDetectedNoteRef.current = null;
+            noteDetectionStartTimeRef.current = null;
+            setHasFoundCorrect(false);
+            setDetectedNote("");
+            setNoteStatus("pending");
+          }
+          return !prev;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
     };
   }, []);
 
@@ -256,55 +292,83 @@ const ChordScaleRandomizer: React.FC = () => {
       // Threshold for signal detection
       const frequency = sampleRate / bestPeriod;
       const note = frequencyToNote(frequency);
+      const currentTime = Date.now();
 
-      console.log("Pitch detected:", {
-        frequency: frequency.toFixed(2),
-        note,
-        hasDetectedFirstNote: hasDetectedFirstNoteRef.current,
-      });
+      // Check if this is the same note we were detecting
+      if (currentDetectedNoteRef.current === note) {
+        // Same note, check if we've held it long enough
+        if (
+          noteDetectionStartTimeRef.current &&
+          currentTime - noteDetectionStartTimeRef.current >=
+            DETECTION_DURATION_MS
+        ) {
+          // Note has been held long enough, process it
+          console.log("Note confirmed after duration:", {
+            frequency: frequency.toFixed(2),
+            note,
+            duration: currentTime - noteDetectionStartTimeRef.current,
+            hasDetectedFirstNote: hasDetectedFirstNoteRef.current,
+          });
 
-      // Mark that we've detected the first note
-      if (!hasDetectedFirstNoteRef.current) {
-        console.log("Setting hasDetectedFirstNote to true");
-        hasDetectedFirstNoteRef.current = true;
+          // Mark that we've detected the first note
+          if (!hasDetectedFirstNoteRef.current) {
+            console.log("Setting hasDetectedFirstNote to true");
+            hasDetectedFirstNoteRef.current = true;
+            // Now that user has played their first note, we can start recording results
+            isFirstScaleDegree.current = false;
+          }
+
+          // Use current values from ref
+          const {
+            selectedKey: currentKey,
+            currentScaleDegree: currentSD,
+            mode: currentMode,
+          } = currentStateRef.current;
+          const expectedNote = getExpectedNote(
+            currentKey,
+            currentSD.degree,
+            currentMode
+          );
+
+          console.log("Note comparison:", {
+            detectedNote: note,
+            expectedNote,
+            currentKey,
+            scaleDegree: currentSD.degree,
+            mode: currentMode,
+          });
+
+          const isCorrect = note === expectedNote;
+
+          setDetectedNote(note);
+
+          if (isCorrect && !hasFoundCorrect) {
+            // Found correct note for the first time - lock in green
+            setNoteStatus("correct");
+            setHasFoundCorrect(true);
+            everFoundCorrectForCurrentDegree.current = true; // Track that we found it for this scale degree
+            console.log("Found correct note, setting hasFoundCorrect to true");
+          } else if (!hasFoundCorrect) {
+            // Haven't found correct yet, show red for wrong notes
+            setNoteStatus("incorrect");
+          }
+          // If hasFoundCorrect is true, keep showing green (don't change status)
+        }
+        // Note is being held, but not long enough yet - do nothing
+      } else {
+        // Different note detected, start tracking this new note
+        currentDetectedNoteRef.current = note;
+        noteDetectionStartTimeRef.current = currentTime;
+        console.log("New note detected, starting timer:", note);
       }
-
-      // Use current values from ref
-      const {
-        selectedKey: currentKey,
-        currentScaleDegree: currentSD,
-        mode: currentMode,
-      } = currentStateRef.current;
-      const expectedNote = getExpectedNote(
-        currentKey,
-        currentSD.degree,
-        currentMode
-      );
-
-      console.log("Note comparison:", {
-        detectedNote: note,
-        expectedNote,
-        currentKey,
-        scaleDegree: currentSD.degree,
-        mode: currentMode,
-      });
-
-      const isCorrect = note === expectedNote;
-
-      setDetectedNote(note);
-
-      if (isCorrect && !hasFoundCorrect) {
-        // Found correct note for the first time - lock in green
-        setNoteStatus("correct");
-        setHasFoundCorrect(true);
-        everFoundCorrectForCurrentDegree.current = true; // Track that we found it for this scale degree
-        console.log("Found correct note, setting hasFoundCorrect to true");
-      } else if (!hasFoundCorrect) {
-        // Haven't found correct yet, show red for wrong notes
-        setNoteStatus("incorrect");
-      }
-      // If hasFoundCorrect is true, keep showing green (don't change status)
     } else {
+      // No signal detected, reset tracking
+      if (currentDetectedNoteRef.current !== null) {
+        console.log("Signal lost, resetting note tracking");
+        currentDetectedNoteRef.current = null;
+        noteDetectionStartTimeRef.current = null;
+      }
+
       if (!hasFoundCorrect) {
         // Only reset to pending if we haven't found correct yet
         setDetectedNote("");
@@ -385,12 +449,14 @@ const ChordScaleRandomizer: React.FC = () => {
       resultsLength: results.length,
     });
 
+    // Only record if user has played notes AND this isn't the very first scale degree
     if (!isFirstScaleDegree.current && hasDetectedFirstNoteRef.current) {
       const wasCorrect = everFoundCorrectForCurrentDegree.current;
       console.log("Recording result:", {
         wasCorrect,
         resultsLength: results.length,
-        everFoundCorrectForCurrentDegree: everFoundCorrectForCurrentDegree.current,
+        everFoundCorrectForCurrentDegree:
+          everFoundCorrectForCurrentDegree.current,
         hasFoundCorrect,
       });
       setResults((prev) => {
@@ -401,8 +467,9 @@ const ChordScaleRandomizer: React.FC = () => {
     } else if (!isFirstScaleDegree.current) {
       console.log("Not recording - user hasnt played any notes yet");
     } else {
-      console.log("Skipping first scale degree recording");
-      isFirstScaleDegree.current = false;
+      console.log("Skipping first scale degree recording (first scale degree)");
+      // Don't set isFirstScaleDegree to false until user plays first note
+      // This will be set to false when we detect the first note
     }
 
     const newScaleDegree = generateNewScaleDegree();
@@ -508,7 +575,21 @@ const ChordScaleRandomizer: React.FC = () => {
         <div className="space-y-6">
           {/* Play/Stop Button */}
           <button
-            onClick={() => setIsPlaying(!isPlaying)}
+            onClick={() => {
+              if (!isPlaying) {
+                // Starting - reset all detection and results
+                setResults([]);
+                hasDetectedFirstNoteRef.current = false;
+                everFoundCorrectForCurrentDegree.current = false;
+                isFirstScaleDegree.current = true;
+                currentDetectedNoteRef.current = null;
+                noteDetectionStartTimeRef.current = null;
+                setHasFoundCorrect(false);
+                setDetectedNote("");
+                setNoteStatus("pending");
+              }
+              setIsPlaying(!isPlaying);
+            }}
             className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg transition-all duration-200 transform hover:scale-105"
           >
             {isPlaying ? "Stop" : "Start"} Auto-Randomizer
@@ -629,7 +710,16 @@ const ChordScaleRandomizer: React.FC = () => {
                 <div className="flex justify-between items-center mb-3">
                   <div className="text-white text-sm font-medium">Results</div>
                   <button
-                    onClick={() => setResults([])}
+                    onClick={() => {
+                      setResults([]);
+                      // Reset detection state so no new results are recorded until user plays first note again
+                      hasDetectedFirstNoteRef.current = false;
+                      everFoundCorrectForCurrentDegree.current = false;
+                      isFirstScaleDegree.current = true;
+                      // Reset duration tracking
+                      currentDetectedNoteRef.current = null;
+                      noteDetectionStartTimeRef.current = null;
+                    }}
                     className="px-3 py-1 text-xs bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
                   >
                     Reset
