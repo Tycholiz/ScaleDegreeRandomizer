@@ -693,8 +693,8 @@ const ChordScaleRandomizer: React.FC = () => {
           </div>
 
           {/* Note Detection Indicator */}
-          {isPlaying && (
-            <div className="flex justify-center">
+          <div className="flex justify-center">
+            {isPlaying ? (
               <div
                 className={`px-6 py-3 rounded-xl font-bold text-white text-lg border-2 ${
                   noteStatus === "pending"
@@ -706,8 +706,12 @@ const ChordScaleRandomizer: React.FC = () => {
               >
                 {detectedNote || "..."}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="px-6 py-3 rounded-xl font-bold text-transparent text-lg border-2 border-transparent">
+                ...
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Controls */}
