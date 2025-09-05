@@ -45,7 +45,7 @@ const ChordScaleRandomizer: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   // Initialize state with saved values from localStorage
   const [interval, setInterval] = useState(() => {
-    const saved = localStorage.getItem('scaleDegreeRandomizer_interval');
+    const saved = localStorage.getItem("scaleDegreeRandomizer_interval");
     if (saved) {
       const parsed = parseFloat(saved);
       if (parsed >= 1 && parsed <= 5) {
@@ -54,25 +54,25 @@ const ChordScaleRandomizer: React.FC = () => {
     }
     return 3.0;
   });
-  
+
   const [selectedKey, setSelectedKey] = useState(() => {
-    const saved = localStorage.getItem('scaleDegreeRandomizer_key');
+    const saved = localStorage.getItem("scaleDegreeRandomizer_key");
     if (saved && KEYS.includes(saved)) {
       return saved;
     }
     return "C";
   });
-  
+
   const [mode, setMode] = useState<Mode>(() => {
-    const saved = localStorage.getItem('scaleDegreeRandomizer_mode');
-    if (saved && (saved === 'major' || saved === 'minor')) {
+    const saved = localStorage.getItem("scaleDegreeRandomizer_mode");
+    if (saved && (saved === "major" || saved === "minor")) {
       return saved as Mode;
     }
     return "major";
   });
-  
+
   const [volume, setVolume] = useState(() => {
-    const saved = localStorage.getItem('scaleDegreeRandomizer_volume');
+    const saved = localStorage.getItem("scaleDegreeRandomizer_volume");
     if (saved) {
       const parsed = parseFloat(saved);
       if (parsed >= 0 && parsed <= 1) {
@@ -190,19 +190,19 @@ const ChordScaleRandomizer: React.FC = () => {
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem('scaleDegreeRandomizer_interval', interval.toString());
+    localStorage.setItem("scaleDegreeRandomizer_interval", interval.toString());
   }, [interval]);
 
   useEffect(() => {
-    localStorage.setItem('scaleDegreeRandomizer_key', selectedKey);
+    localStorage.setItem("scaleDegreeRandomizer_key", selectedKey);
   }, [selectedKey]);
 
   useEffect(() => {
-    localStorage.setItem('scaleDegreeRandomizer_mode', mode);
+    localStorage.setItem("scaleDegreeRandomizer_mode", mode);
   }, [mode]);
 
   useEffect(() => {
-    localStorage.setItem('scaleDegreeRandomizer_volume', volume.toString());
+    localStorage.setItem("scaleDegreeRandomizer_volume", volume.toString());
   }, [volume]);
 
   const getExpectedNote = (
@@ -234,29 +234,62 @@ const ChordScaleRandomizer: React.FC = () => {
     // Calculate the interval from the key
     let interval = (noteIndex - keyIndex + 12) % 12;
 
-    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
-    const minorIntervals = [0, 2, 3, 5, 7, 8, 10];
-    const intervals = mode === "major" ? majorIntervals : minorIntervals;
+    if (mode === "major") {
+      const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
 
-    // Find the scale degree that matches this interval
-    const degreeIndex = intervals.findIndex((i) => i === interval);
+      // Find exact match first
+      const degreeIndex = majorIntervals.findIndex((i) => i === interval);
+      if (degreeIndex !== -1) {
+        return (degreeIndex + 1).toString();
+      }
 
-    if (degreeIndex !== -1) {
-      // Perfect match - natural scale degree
-      return (degreeIndex + 1).toString();
-    }
+      // Check for chromatic alterations relative to major scale
+      for (let i = 0; i < majorIntervals.length; i++) {
+        const naturalInterval = majorIntervals[i];
+        const degree = i + 1;
 
-    // Check for chromatic alterations
-    for (let i = 0; i < intervals.length; i++) {
-      const naturalInterval = intervals[i];
-      const degree = i + 1;
+        if (interval === (naturalInterval + 1) % 12) {
+          return `#${degree}`;
+        } else if (interval === (naturalInterval - 1 + 12) % 12) {
+          return `♭${degree}`;
+        }
+      }
+    } else {
+      // For minor mode, we want to show the scale degrees relative to the natural minor scale
+      // Natural minor intervals: 1, 2, b3, 4, 5, b6, b7
+      const minorIntervals = [0, 2, 3, 5, 7, 8, 10];
+      const minorDegreeNames = ["1", "2", "♭3", "4", "5", "♭6", "♭7"];
 
-      if (interval === (naturalInterval + 1) % 12) {
-        // Sharp
-        return `#${degree}`;
-      } else if (interval === (naturalInterval - 1 + 12) % 12) {
-        // Flat
-        return `b${degree}`;
+      // Find exact match first
+      const degreeIndex = minorIntervals.findIndex((i) => i === interval);
+      if (degreeIndex !== -1) {
+        return minorDegreeNames[degreeIndex];
+      }
+
+      // Check for chromatic alterations relative to natural minor scale
+      // Special handling for interval 11 (major 7th) - this should be "7", not "♭1"
+      if (interval === 11) {
+        return "7";
+      }
+      
+      for (let i = 0; i < minorIntervals.length; i++) {
+        const naturalInterval = minorIntervals[i];
+        const degreeName = minorDegreeNames[i];
+
+        if (interval === (naturalInterval + 1) % 12) {
+          // Sharp version of the minor scale degree
+          if (degreeName.startsWith("♭")) {
+            // If it's already flat (like ♭3), sharp makes it natural (3)
+            return degreeName.substring(1);
+          } else {
+            return `#${degreeName}`;
+          }
+        } else if (interval === (naturalInterval - 1 + 12) % 12) {
+          // Flat version of the minor scale degree
+          if (!degreeName.startsWith("♭")) {
+            return `♭${degreeName}`;
+          }
+        }
       }
     }
 
@@ -277,13 +310,17 @@ const ChordScaleRandomizer: React.FC = () => {
 
     if (mode === "major") {
       // Major triad: root, major third, perfect fifth
-      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 4); // Major third (4 semitones)
-      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
+      const thirdFreq =
+        baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 4); // Major third (4 semitones)
+      const fifthFreq =
+        baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
       return [rootFreq, thirdFreq, fifthFreq];
     } else {
       // Minor triad: root, minor third, perfect fifth
-      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 3); // Minor third (3 semitones)
-      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
+      const thirdFreq =
+        baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 3); // Minor third (3 semitones)
+      const fifthFreq =
+        baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
       return [rootFreq, thirdFreq, fifthFreq];
     }
   };
