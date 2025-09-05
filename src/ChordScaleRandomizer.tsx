@@ -43,10 +43,44 @@ const ChordScaleRandomizer: React.FC = () => {
     degree: 1,
   });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [interval, setInterval] = useState(3.0);
-  const [selectedKey, setSelectedKey] = useState("C");
-  const [mode, setMode] = useState<Mode>("major");
-  const [volume, setVolume] = useState(0.3);
+  // Initialize state with saved values from localStorage
+  const [interval, setInterval] = useState(() => {
+    const saved = localStorage.getItem('scaleDegreeRandomizer_interval');
+    if (saved) {
+      const parsed = parseFloat(saved);
+      if (parsed >= 1 && parsed <= 5) {
+        return parsed;
+      }
+    }
+    return 3.0;
+  });
+  
+  const [selectedKey, setSelectedKey] = useState(() => {
+    const saved = localStorage.getItem('scaleDegreeRandomizer_key');
+    if (saved && KEYS.includes(saved)) {
+      return saved;
+    }
+    return "C";
+  });
+  
+  const [mode, setMode] = useState<Mode>(() => {
+    const saved = localStorage.getItem('scaleDegreeRandomizer_mode');
+    if (saved && (saved === 'major' || saved === 'minor')) {
+      return saved as Mode;
+    }
+    return "major";
+  });
+  
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('scaleDegreeRandomizer_volume');
+    if (saved) {
+      const parsed = parseFloat(saved);
+      if (parsed >= 0 && parsed <= 1) {
+        return parsed;
+      }
+    }
+    return 0.3;
+  });
   const [isMuted, setIsMuted] = useState(false);
   const [lastCombination, setLastCombination] = useState<ScaleDegree | null>(
     null
@@ -153,6 +187,23 @@ const ChordScaleRandomizer: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSettingsMenu]);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('scaleDegreeRandomizer_interval', interval.toString());
+  }, [interval]);
+
+  useEffect(() => {
+    localStorage.setItem('scaleDegreeRandomizer_key', selectedKey);
+  }, [selectedKey]);
+
+  useEffect(() => {
+    localStorage.setItem('scaleDegreeRandomizer_mode', mode);
+  }, [mode]);
+
+  useEffect(() => {
+    localStorage.setItem('scaleDegreeRandomizer_volume', volume.toString());
+  }, [volume]);
 
   const getExpectedNote = (
     keyName: string,
