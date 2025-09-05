@@ -170,6 +170,48 @@ const ChordScaleRandomizer: React.FC = () => {
     return expectedNote;
   };
 
+  const noteToScaleDegree = (
+    noteName: string,
+    keyName: string,
+    mode: Mode
+  ): string => {
+    const noteIndex = NOTE_NAMES.findIndex((note) => note === noteName);
+    const keyIndex = KEYS.findIndex((key) => key === keyName);
+    
+    if (noteIndex === -1 || keyIndex === -1) return "?";
+
+    // Calculate the interval from the key
+    let interval = (noteIndex - keyIndex + 12) % 12;
+    
+    const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
+    const minorIntervals = [0, 2, 3, 5, 7, 8, 10];
+    const intervals = mode === "major" ? majorIntervals : minorIntervals;
+    
+    // Find the scale degree that matches this interval
+    const degreeIndex = intervals.findIndex(i => i === interval);
+    
+    if (degreeIndex !== -1) {
+      // Perfect match - natural scale degree
+      return (degreeIndex + 1).toString();
+    }
+    
+    // Check for chromatic alterations
+    for (let i = 0; i < intervals.length; i++) {
+      const naturalInterval = intervals[i];
+      const degree = i + 1;
+      
+      if (interval === (naturalInterval + 1) % 12) {
+        // Sharp
+        return `#${degree}`;
+      } else if (interval === (naturalInterval - 1 + 12) % 12) {
+        // Flat
+        return `b${degree}`;
+      }
+    }
+    
+    return "?";
+  };
+
   const getFrequency = (keyName: string, mode: Mode): number[] => {
     const keyIndex = KEYS.findIndex((key) => key === keyName);
     const baseFrequency = 261.63; // C4
@@ -379,7 +421,8 @@ const ChordScaleRandomizer: React.FC = () => {
           });
 
           const isCorrect = note === expectedNote;
-          setDetectedNote(note);
+          const detectedScaleDegree = noteToScaleDegree(note, currentKey, currentMode);
+          setDetectedNote(detectedScaleDegree);
 
           if (isCorrect && !hasFoundCorrect) {
             // Found correct note for the first time - lock in green
