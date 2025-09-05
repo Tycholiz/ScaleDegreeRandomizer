@@ -127,10 +127,9 @@ const ChordScaleRandomizer: React.FC = () => {
 
         // Toggle play state
         if (!isPlaying) {
-          // Check microphone access before starting
-          try {
-            await navigator.mediaDevices.getUserMedia({ audio: true });
-            // If we get here, mic access is granted
+          // Initialize microphone if needed
+          const micReady = await initializeMicrophone();
+          if (micReady) {
             // Starting - reset all detection and results
             setResults([]);
             hasDetectedFirstNoteRef.current = false;
@@ -142,7 +141,7 @@ const ChordScaleRandomizer: React.FC = () => {
             setDetectedNote("");
             setNoteStatus("pending");
             setIsPlaying(true);
-          } catch (error) {
+          } else {
             // Microphone access denied or not available
             alert(
               "Microphone access is required to use the Scale Degree Randomizer. Please grant microphone permission and try again."
@@ -187,6 +186,30 @@ const ChordScaleRandomizer: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showSettingsMenu]);
+
+  // Handle page visibility change to stop playback when tab loses focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && isPlaying) {
+        setIsPlaying(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isPlaying]);
+
+  // Cleanup microphone stream on component unmount
+  useEffect(() => {
+    return () => {
+      if (microphoneStream.current) {
+        microphoneStream.current.getTracks().forEach((track) => track.stop());
+        microphoneStream.current = null;
+      }
+    };
+  }, []);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -560,34 +583,42 @@ const ChordScaleRandomizer: React.FC = () => {
     }
   }, []); // No dependencies - function never changes
 
-  const startPitchDetection = async () => {
+  const initializeMicrophone = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      microphoneStream.current = stream;
+      if (!microphoneStream.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        microphoneStream.current = stream;
 
-      const source = audioContext.current!.createMediaStreamSource(stream);
-      analyser.current = audioContext.current!.createAnalyser();
-      analyser.current.fftSize = 2048;
-      source.connect(analyser.current);
+        const source = audioContext.current!.createMediaStreamSource(stream);
+        analyser.current = audioContext.current!.createAnalyser();
+        analyser.current.fftSize = 2048;
+        source.connect(analyser.current);
+      }
+      return true;
+    } catch (error) {
+      console.error("Microphone access denied:", error);
+      return false;
+    }
+  };
 
+  const startPitchDetection = async () => {
+    const micReady = await initializeMicrophone();
+    if (micReady) {
       const detect = () => {
         detectPitch();
         pitchDetectionId.current = requestAnimationFrame(detect);
       };
       detect();
-    } catch (error) {
-      console.error("Microphone access denied:", error);
     }
   };
 
   const stopPitchDetection = () => {
     if (pitchDetectionId.current) {
       cancelAnimationFrame(pitchDetectionId.current);
+      pitchDetectionId.current = null;
     }
-    if (microphoneStream.current) {
-      microphoneStream.current.getTracks().forEach((track) => track.stop());
-      microphoneStream.current = null;
-    }
+    // Keep microphone stream alive to maintain permissions
+    // Only stop it when the component unmounts
     setDetectedNote("");
     setNoteStatus("pending");
   };
