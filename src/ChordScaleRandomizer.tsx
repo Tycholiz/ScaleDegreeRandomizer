@@ -268,18 +268,22 @@ const ChordScaleRandomizer: React.FC = () => {
     const baseFrequency = 261.63; // C4
     const semitoneRatio = Math.pow(2, 1 / 12);
 
+    // For keys G# and above (G#, A, A#, B), lower by one octave
+    const octaveAdjustment = keyIndex >= 8 ? -12 : 0; // G# is at index 8
+    const adjustedKeyIndex = keyIndex + octaveAdjustment;
+
     // Always play the root chord of the selected key
-    const rootFreq = baseFrequency * Math.pow(semitoneRatio, keyIndex);
+    const rootFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex);
 
     if (mode === "major") {
       // Major triad: root, major third, perfect fifth
-      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, keyIndex + 4); // Major third (4 semitones)
-      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, keyIndex + 7); // Perfect fifth (7 semitones)
+      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 4); // Major third (4 semitones)
+      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
       return [rootFreq, thirdFreq, fifthFreq];
     } else {
       // Minor triad: root, minor third, perfect fifth
-      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, keyIndex + 3); // Minor third (3 semitones)
-      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, keyIndex + 7); // Perfect fifth (7 semitones)
+      const thirdFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 3); // Minor third (3 semitones)
+      const fifthFreq = baseFrequency * Math.pow(semitoneRatio, adjustedKeyIndex + 7); // Perfect fifth (7 semitones)
       return [rootFreq, thirdFreq, fifthFreq];
     }
   };
