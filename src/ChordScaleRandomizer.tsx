@@ -43,7 +43,7 @@ const ChordScaleRandomizer: React.FC = () => {
     degree: 1,
   });
   const [isPlaying, setIsPlaying] = useState(false);
-  const [interval, setInterval] = useState(2.0);
+  const [interval, setInterval] = useState(3.0);
   const [selectedKey, setSelectedKey] = useState("C");
   const [mode, setMode] = useState<Mode>("major");
   const [volume, setVolume] = useState(0.3);
@@ -177,29 +177,29 @@ const ChordScaleRandomizer: React.FC = () => {
   ): string => {
     const noteIndex = NOTE_NAMES.findIndex((note) => note === noteName);
     const keyIndex = KEYS.findIndex((key) => key === keyName);
-    
+
     if (noteIndex === -1 || keyIndex === -1) return "?";
 
     // Calculate the interval from the key
     let interval = (noteIndex - keyIndex + 12) % 12;
-    
+
     const majorIntervals = [0, 2, 4, 5, 7, 9, 11];
     const minorIntervals = [0, 2, 3, 5, 7, 8, 10];
     const intervals = mode === "major" ? majorIntervals : minorIntervals;
-    
+
     // Find the scale degree that matches this interval
-    const degreeIndex = intervals.findIndex(i => i === interval);
-    
+    const degreeIndex = intervals.findIndex((i) => i === interval);
+
     if (degreeIndex !== -1) {
       // Perfect match - natural scale degree
       return (degreeIndex + 1).toString();
     }
-    
+
     // Check for chromatic alterations
     for (let i = 0; i < intervals.length; i++) {
       const naturalInterval = intervals[i];
       const degree = i + 1;
-      
+
       if (interval === (naturalInterval + 1) % 12) {
         // Sharp
         return `#${degree}`;
@@ -208,7 +208,7 @@ const ChordScaleRandomizer: React.FC = () => {
         return `b${degree}`;
       }
     }
-    
+
     return "?";
   };
 
@@ -421,7 +421,11 @@ const ChordScaleRandomizer: React.FC = () => {
           });
 
           const isCorrect = note === expectedNote;
-          const detectedScaleDegree = noteToScaleDegree(note, currentKey, currentMode);
+          const detectedScaleDegree = noteToScaleDegree(
+            note,
+            currentKey,
+            currentMode
+          );
           setDetectedNote(detectedScaleDegree);
 
           if (isCorrect && !hasFoundCorrect) {
