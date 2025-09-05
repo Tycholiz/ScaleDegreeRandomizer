@@ -344,67 +344,72 @@ const ChordScaleRandomizer: React.FC = () => {
     }
 
     const frequencies = getFrequency(selectedKey, mode);
-    const gainNode = audioContext.current.createGain();
-    gainNode.connect(audioContext.current.destination);
-    gainNode.gain.setValueAtTime(volume, audioContext.current.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioContext.current.currentTime + 0.8
-    );
+    const masterGain = audioContext.current.createGain();
+    masterGain.connect(audioContext.current.destination);
+    
+    // Balanced master volume to prevent clipping while maintaining good volume
+    const masterVolume = volume * 0.45; // Balanced volume for good listening level
+    masterGain.gain.setValueAtTime(masterVolume, audioContext.current.currentTime);
 
     frequencies.forEach((freq) => {
-      // Create a more piano-like sound with multiple harmonics
-      const fundamental = audioContext.current!.createOscillator();
-      const harmonic2 = audioContext.current!.createOscillator();
-      const harmonic3 = audioContext.current!.createOscillator();
+      // Create a much more pleasant electric piano-like sound
+      const osc1 = audioContext.current!.createOscillator();
+      const osc2 = audioContext.current!.createOscillator();
+      const osc3 = audioContext.current!.createOscillator();
 
-      // Fundamental frequency
-      fundamental.type = "triangle";
-      fundamental.frequency.setValueAtTime(
-        freq,
-        audioContext.current!.currentTime
-      );
+      // Use sine waves for cleaner sound
+      osc1.type = "sine";
+      osc2.type = "sine"; 
+      osc3.type = "sine";
 
-      // Second harmonic (octave)
-      harmonic2.type = "sine";
-      harmonic2.frequency.setValueAtTime(
-        freq * 2,
-        audioContext.current!.currentTime
-      );
+      // Fundamental and carefully chosen harmonics for piano-like timbre
+      osc1.frequency.setValueAtTime(freq, audioContext.current!.currentTime);
+      osc2.frequency.setValueAtTime(freq * 2, audioContext.current!.currentTime); // Octave
+      osc3.frequency.setValueAtTime(freq * 4, audioContext.current!.currentTime); // Two octaves
 
-      // Third harmonic (fifth)
-      harmonic3.type = "sine";
-      harmonic3.frequency.setValueAtTime(
-        freq * 3,
-        audioContext.current!.currentTime
-      );
+      // Create individual gain controls
+      const gain1 = audioContext.current!.createGain();
+      const gain2 = audioContext.current!.createGain();
+      const gain3 = audioContext.current!.createGain();
 
-      // Create gain nodes for each harmonic to control their volumes
-      const fundamentalGain = audioContext.current!.createGain();
-      const harmonic2Gain = audioContext.current!.createGain();
-      const harmonic3Gain = audioContext.current!.createGain();
+      // Much lower harmonic levels to prevent clipping
+      const baseLevel1 = 0.3; // Reduced from 0.8
+      const baseLevel2 = 0.08; // Reduced from 0.15  
+      const baseLevel3 = 0.02; // Reduced from 0.05
 
-      // Set relative volumes (fundamental loudest, harmonics quieter)
-      fundamentalGain.gain.setValueAtTime(
-        1.0,
-        audioContext.current!.currentTime
-      );
-      harmonic2Gain.gain.setValueAtTime(0.3, audioContext.current!.currentTime);
-      harmonic3Gain.gain.setValueAtTime(0.1, audioContext.current!.currentTime);
+      // Add gentle attack and decay envelopes for more realistic sound
+      const attackTime = 0.02;
+      const releaseTime = 0.6;
+      const currentTime = audioContext.current!.currentTime;
 
-      // Connect everything
-      fundamental.connect(fundamentalGain);
-      harmonic2.connect(harmonic2Gain);
-      harmonic3.connect(harmonic3Gain);
+      // Set initial values
+      gain1.gain.setValueAtTime(0, currentTime);
+      gain2.gain.setValueAtTime(0, currentTime);
+      gain3.gain.setValueAtTime(0, currentTime);
 
-      fundamentalGain.connect(gainNode);
-      harmonic2Gain.connect(gainNode);
-      harmonic3Gain.connect(gainNode);
+      // Attack phase
+      gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
+      gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
+      gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
 
-      // Start and stop all oscillators
-      [fundamental, harmonic2, harmonic3].forEach((osc) => {
-        osc.start();
-        osc.stop(audioContext.current!.currentTime + 0.8);
+      // Decay phase
+      gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+      gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+      gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+
+      // Connect the audio graph
+      osc1.connect(gain1);
+      osc2.connect(gain2);
+      osc3.connect(gain3);
+
+      gain1.connect(masterGain);
+      gain2.connect(masterGain);
+      gain3.connect(masterGain);
+
+      // Start and schedule stop
+      [osc1, osc2, osc3].forEach((osc) => {
+        osc.start(currentTime);
+        osc.stop(currentTime + releaseTime);
         currentOscillators.current.push(osc);
       });
     });
