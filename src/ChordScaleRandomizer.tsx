@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 type Direction = "ABOVE" | "BELOW";
 type Mode = "major" | "minor";
+type Timbre = "piano" | "synthesizer" | "guitar";
 
 interface ScaleDegree {
   degree: number;
@@ -82,6 +83,13 @@ const ChordScaleRandomizer: React.FC = () => {
     return 0.3;
   });
   const [isMuted, setIsMuted] = useState(false);
+  const [timbre, setTimbre] = useState<Timbre>(() => {
+    const saved = localStorage.getItem("scaleDegreeRandomizer_timbre");
+    if (saved && (saved === "piano" || saved === "synthesizer" || saved === "guitar")) {
+      return saved as Timbre;
+    }
+    return "synthesizer";
+  });
   const [lastCombination, setLastCombination] = useState<ScaleDegree | null>(
     null
   );
@@ -227,6 +235,10 @@ const ChordScaleRandomizer: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("scaleDegreeRandomizer_volume", volume.toString());
   }, [volume]);
+
+  useEffect(() => {
+    localStorage.setItem("scaleDegreeRandomizer_timbre", timbre);
+  }, [timbre]);
 
   const getExpectedNote = (
     keyName: string,
@@ -379,76 +391,216 @@ const ChordScaleRandomizer: React.FC = () => {
     const masterVolume = volume * 0.45; // Balanced volume for good listening level
     masterGain.gain.setValueAtTime(masterVolume, audioContext.current.currentTime);
 
-    frequencies.forEach((freq) => {
-      // Create a much more pleasant electric piano-like sound
-      const osc1 = audioContext.current!.createOscillator();
-      const osc2 = audioContext.current!.createOscillator();
-      const osc3 = audioContext.current!.createOscillator();
+    const currentTime = audioContext.current.currentTime;
+    const releaseTime = duration;
 
-      // Use sine waves for cleaner sound
-      osc1.type = "sine";
-      osc2.type = "sine";
-      osc3.type = "sine";
+    if (timbre === "piano") {
+      // Piano timbre - bell-like with quick decay
+      frequencies.forEach((freq) => {
+        const osc1 = audioContext.current!.createOscillator();
+        const osc2 = audioContext.current!.createOscillator();
+        const osc3 = audioContext.current!.createOscillator();
 
-      // Fundamental and carefully chosen harmonics for piano-like timbre
-      osc1.frequency.setValueAtTime(freq, audioContext.current!.currentTime);
-      osc2.frequency.setValueAtTime(freq * 2, audioContext.current!.currentTime); // Octave
-      osc3.frequency.setValueAtTime(freq * 4, audioContext.current!.currentTime); // Two octaves
+        osc1.type = "sine";
+        osc2.type = "sine";
+        osc3.type = "sine";
 
-      // Create individual gain controls
-      const gain1 = audioContext.current!.createGain();
-      const gain2 = audioContext.current!.createGain();
-      const gain3 = audioContext.current!.createGain();
+        osc1.frequency.setValueAtTime(freq, currentTime);
+        osc2.frequency.setValueAtTime(freq * 2, currentTime); // Octave
+        osc3.frequency.setValueAtTime(freq * 4, currentTime); // Two octaves
 
-      // Much lower harmonic levels to prevent clipping
-      const baseLevel1 = 0.3; // Reduced from 0.8
-      const baseLevel2 = 0.08; // Reduced from 0.15
-      const baseLevel3 = 0.02; // Reduced from 0.05
+        const gain1 = audioContext.current!.createGain();
+        const gain2 = audioContext.current!.createGain();
+        const gain3 = audioContext.current!.createGain();
 
-      // Add gentle attack and decay envelopes for more realistic sound
-      const attackTime = 0.02;
-      const releaseTime = duration; // Use the full interval duration
-      const currentTime = audioContext.current!.currentTime;
+        const baseLevel1 = 0.3;
+        const baseLevel2 = 0.08;
+        const baseLevel3 = 0.02;
 
-      // Set initial values
-      gain1.gain.setValueAtTime(0, currentTime);
-      gain2.gain.setValueAtTime(0, currentTime);
-      gain3.gain.setValueAtTime(0, currentTime);
+        const attackTime = 0.02;
 
-      // Attack phase
-      gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
-      gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
-      gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
+        gain1.gain.setValueAtTime(0, currentTime);
+        gain2.gain.setValueAtTime(0, currentTime);
+        gain3.gain.setValueAtTime(0, currentTime);
 
-      // Sustain at full level until near the end, then decay
-      const sustainTime = releaseTime - 0.1; // Sustain for most of the duration
-      const decayTime = 0.1; // Short decay at the end
+        gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
+        gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
+        gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
 
-      gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
-      gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
-      gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
+        const sustainTime = releaseTime - 0.1;
+        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
+        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
+        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
 
-      // Quick decay at the end
-      gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-      gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-      gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
 
-      // Connect the audio graph
-      osc1.connect(gain1);
-      osc2.connect(gain2);
-      osc3.connect(gain3);
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
 
-      gain1.connect(masterGain);
-      gain2.connect(masterGain);
-      gain3.connect(masterGain);
+        gain1.connect(masterGain);
+        gain2.connect(masterGain);
+        gain3.connect(masterGain);
 
-      // Start and schedule stop
-      [osc1, osc2, osc3].forEach((osc) => {
-        osc.start(currentTime);
-        osc.stop(currentTime + releaseTime);
-        currentOscillators.current.push(osc);
+        [osc1, osc2, osc3].forEach((osc) => {
+          osc.start(currentTime);
+          osc.stop(currentTime + releaseTime);
+          currentOscillators.current.push(osc);
+        });
       });
-    });
+    } else if (timbre === "synthesizer") {
+      // Synthesizer timbre - rich and full
+      frequencies.forEach((freq) => {
+        const osc1 = audioContext.current!.createOscillator();
+        const osc2 = audioContext.current!.createOscillator();
+        const osc3 = audioContext.current!.createOscillator();
+        const osc4 = audioContext.current!.createOscillator();
+
+        osc1.type = "sawtooth";
+        osc2.type = "square";
+        osc3.type = "sine";
+        osc4.type = "triangle";
+
+        osc1.frequency.setValueAtTime(freq, currentTime);
+        osc2.frequency.setValueAtTime(freq, currentTime);
+        osc3.frequency.setValueAtTime(freq * 2, currentTime);
+        osc4.frequency.setValueAtTime(freq * 0.5, currentTime);
+
+        const gain1 = audioContext.current!.createGain();
+        const gain2 = audioContext.current!.createGain();
+        const gain3 = audioContext.current!.createGain();
+        const gain4 = audioContext.current!.createGain();
+
+        const baseLevel1 = 0.15;
+        const baseLevel2 = 0.08;
+        const baseLevel3 = 0.12;
+        const baseLevel4 = 0.10;
+
+        const attackTime = 0.05;
+
+        gain1.gain.setValueAtTime(0, currentTime);
+        gain2.gain.setValueAtTime(0, currentTime);
+        gain3.gain.setValueAtTime(0, currentTime);
+        gain4.gain.setValueAtTime(0, currentTime);
+
+        gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
+        gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
+        gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
+        gain4.gain.linearRampToValueAtTime(baseLevel4, currentTime + attackTime);
+
+        const sustainTime = releaseTime - 0.15;
+        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
+        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
+        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
+        gain4.gain.setValueAtTime(baseLevel4, currentTime + sustainTime);
+
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+
+        const filter = audioContext.current!.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(2000, currentTime);
+        filter.Q.setValueAtTime(1, currentTime);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+        osc4.connect(gain4);
+
+        gain1.connect(filter);
+        gain2.connect(filter);
+        gain3.connect(filter);
+        gain4.connect(filter);
+
+        filter.connect(masterGain);
+
+        [osc1, osc2, osc3, osc4].forEach((osc) => {
+          osc.start(currentTime);
+          osc.stop(currentTime + releaseTime);
+          currentOscillators.current.push(osc);
+        });
+      });
+    } else if (timbre === "guitar") {
+      // Guitar timbre - plucked string sound with harmonics
+      frequencies.forEach((freq) => {
+        const osc1 = audioContext.current!.createOscillator();
+        const osc2 = audioContext.current!.createOscillator();
+        const osc3 = audioContext.current!.createOscillator();
+        const osc4 = audioContext.current!.createOscillator();
+
+        osc1.type = "triangle";
+        osc2.type = "sine";
+        osc3.type = "sine";
+        osc4.type = "sine";
+
+        osc1.frequency.setValueAtTime(freq, currentTime);
+        osc2.frequency.setValueAtTime(freq * 2, currentTime); // 2nd harmonic
+        osc3.frequency.setValueAtTime(freq * 3, currentTime); // 3rd harmonic
+        osc4.frequency.setValueAtTime(freq * 5, currentTime); // 5th harmonic
+
+        const gain1 = audioContext.current!.createGain();
+        const gain2 = audioContext.current!.createGain();
+        const gain3 = audioContext.current!.createGain();
+        const gain4 = audioContext.current!.createGain();
+
+        const baseLevel1 = 0.25;
+        const baseLevel2 = 0.15;
+        const baseLevel3 = 0.08;
+        const baseLevel4 = 0.04;
+
+        // Quick attack for plucked sound
+        const attackTime = 0.01;
+
+        gain1.gain.setValueAtTime(0, currentTime);
+        gain2.gain.setValueAtTime(0, currentTime);
+        gain3.gain.setValueAtTime(0, currentTime);
+        gain4.gain.setValueAtTime(0, currentTime);
+
+        gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
+        gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
+        gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
+        gain4.gain.linearRampToValueAtTime(baseLevel4, currentTime + attackTime);
+
+        const sustainTime = releaseTime - 0.2;
+        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
+        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
+        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
+        gain4.gain.setValueAtTime(baseLevel4, currentTime + sustainTime);
+
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+
+        // Add slight filtering for guitar-like tone
+        const filter = audioContext.current!.createBiquadFilter();
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(3500, currentTime);
+        filter.Q.setValueAtTime(0.7, currentTime);
+
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        osc3.connect(gain3);
+        osc4.connect(gain4);
+
+        gain1.connect(filter);
+        gain2.connect(filter);
+        gain3.connect(filter);
+        gain4.connect(filter);
+
+        filter.connect(masterGain);
+
+        [osc1, osc2, osc3, osc4].forEach((osc) => {
+          osc.start(currentTime);
+          osc.stop(currentTime + releaseTime);
+          currentOscillators.current.push(osc);
+        });
+      });
+    }
   };
 
   // Pitch detection functions
@@ -751,7 +903,7 @@ const ChordScaleRandomizer: React.FC = () => {
       stopChord();
       stopPitchDetection();
     };
-  }, [isPlaying, interval, selectedKey, mode, volume, isMuted]); // Include all audio settings
+  }, [isPlaying, interval, selectedKey, mode, volume, isMuted, timbre]); // Include all audio settings
 
   const formatScaleDegree = (scaleDegree: ScaleDegree): string => {
     if (scaleDegree.degree === 1 && !scaleDegree.direction) {
@@ -907,6 +1059,54 @@ const ChordScaleRandomizer: React.FC = () => {
                       disabled={isMuted}
                       className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider disabled:cursor-not-allowed disabled:opacity-50"
                     />
+                  </div>
+
+                  {/* Timbre Selection */}
+                  <div>
+                    <label className="block text-gray-700 text-sm font-medium mb-3">
+                      Chord Timbre
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        onClick={() => {
+                          setTimbre("piano");
+                          setIsPlaying(false);
+                        }}
+                        className={`py-3 px-2 rounded-lg font-medium transition-all ${
+                          timbre === "piano"
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        A
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTimbre("synthesizer");
+                          setIsPlaying(false);
+                        }}
+                        className={`py-3 px-2 rounded-lg font-medium transition-all ${
+                          timbre === "synthesizer"
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        B
+                      </button>
+                      <button
+                        onClick={() => {
+                          setTimbre("guitar");
+                          setIsPlaying(false);
+                        }}
+                        className={`py-3 px-2 rounded-lg font-medium transition-all ${
+                          timbre === "guitar"
+                            ? "bg-blue-500 text-white shadow-lg"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        C
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
