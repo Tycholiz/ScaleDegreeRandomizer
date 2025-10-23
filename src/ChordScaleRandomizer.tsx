@@ -348,7 +348,7 @@ const ChordScaleRandomizer: React.FC = () => {
     }
   };
 
-  const playChord = (scaleDegree: ScaleDegree) => {
+  const playChord = (scaleDegree: ScaleDegree, duration: number = interval) => {
     if (!audioContext.current || isMuted) return;
 
     // Stop any currently playing oscillators
@@ -369,7 +369,7 @@ const ChordScaleRandomizer: React.FC = () => {
     const frequencies = getFrequency(selectedKey, mode);
     const masterGain = audioContext.current.createGain();
     masterGain.connect(audioContext.current.destination);
-    
+
     // Balanced master volume to prevent clipping while maintaining good volume
     const masterVolume = volume * 0.45; // Balanced volume for good listening level
     masterGain.gain.setValueAtTime(masterVolume, audioContext.current.currentTime);
@@ -382,7 +382,7 @@ const ChordScaleRandomizer: React.FC = () => {
 
       // Use sine waves for cleaner sound
       osc1.type = "sine";
-      osc2.type = "sine"; 
+      osc2.type = "sine";
       osc3.type = "sine";
 
       // Fundamental and carefully chosen harmonics for piano-like timbre
@@ -397,12 +397,12 @@ const ChordScaleRandomizer: React.FC = () => {
 
       // Much lower harmonic levels to prevent clipping
       const baseLevel1 = 0.3; // Reduced from 0.8
-      const baseLevel2 = 0.08; // Reduced from 0.15  
+      const baseLevel2 = 0.08; // Reduced from 0.15
       const baseLevel3 = 0.02; // Reduced from 0.05
 
       // Add gentle attack and decay envelopes for more realistic sound
       const attackTime = 0.02;
-      const releaseTime = 0.6;
+      const releaseTime = duration; // Use the full interval duration
       const currentTime = audioContext.current!.currentTime;
 
       // Set initial values
@@ -415,7 +415,15 @@ const ChordScaleRandomizer: React.FC = () => {
       gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
       gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
 
-      // Decay phase
+      // Sustain at full level until near the end, then decay
+      const sustainTime = releaseTime - 0.1; // Sustain for most of the duration
+      const decayTime = 0.1; // Short decay at the end
+
+      gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
+      gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
+      gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
+
+      // Quick decay at the end
       gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
       gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
       gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
@@ -697,7 +705,7 @@ const ChordScaleRandomizer: React.FC = () => {
     setHasFoundCorrect(false); // Reset the "found correct" flag
     everFoundCorrectForCurrentDegree.current = false; // Reset for new scale degree
 
-    playChord(newScaleDegree);
+    playChord(newScaleDegree, interval);
   };
 
   // Auto-randomization effect
