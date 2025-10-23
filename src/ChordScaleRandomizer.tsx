@@ -395,7 +395,7 @@ const ChordScaleRandomizer: React.FC = () => {
     const releaseTime = duration;
 
     if (timbre === "piano") {
-      // Piano timbre - bell-like with quick decay
+      // Piano timbre - bell-like with natural decay
       frequencies.forEach((freq) => {
         const osc1 = audioContext.current!.createOscillator();
         const osc2 = audioContext.current!.createOscillator();
@@ -417,24 +417,25 @@ const ChordScaleRandomizer: React.FC = () => {
         const baseLevel2 = 0.08;
         const baseLevel3 = 0.02;
 
+        // Quick attack for piano-like sound
         const attackTime = 0.02;
+
+        // Natural decay time - same for all interval durations
+        const decayTime = 2.5; // Piano-like natural decay
 
         gain1.gain.setValueAtTime(0, currentTime);
         gain2.gain.setValueAtTime(0, currentTime);
         gain3.gain.setValueAtTime(0, currentTime);
 
+        // Attack to peak
         gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
         gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
         gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
 
-        const sustainTime = releaseTime - 0.1;
-        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
-        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
-        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
-
-        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        // Natural exponential decay from peak
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
 
         osc1.connect(gain1);
         osc2.connect(gain2);
@@ -451,7 +452,7 @@ const ChordScaleRandomizer: React.FC = () => {
         });
       });
     } else if (timbre === "synthesizer") {
-      // Synthesizer timbre - rich and full
+      // Synthesizer timbre - rich and full with natural decay
       frequencies.forEach((freq) => {
         const osc1 = audioContext.current!.createOscillator();
         const osc2 = audioContext.current!.createOscillator();
@@ -480,26 +481,25 @@ const ChordScaleRandomizer: React.FC = () => {
 
         const attackTime = 0.05;
 
+        // Natural decay time - same for all interval durations
+        const decayTime = 3.0; // Synth-like natural decay (slightly longer than piano)
+
         gain1.gain.setValueAtTime(0, currentTime);
         gain2.gain.setValueAtTime(0, currentTime);
         gain3.gain.setValueAtTime(0, currentTime);
         gain4.gain.setValueAtTime(0, currentTime);
 
+        // Attack to peak
         gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
         gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
         gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
         gain4.gain.linearRampToValueAtTime(baseLevel4, currentTime + attackTime);
 
-        const sustainTime = releaseTime - 0.15;
-        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
-        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
-        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
-        gain4.gain.setValueAtTime(baseLevel4, currentTime + sustainTime);
-
-        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        // Natural exponential decay from peak
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
 
         const filter = audioContext.current!.createBiquadFilter();
         filter.type = "lowpass";
@@ -525,7 +525,7 @@ const ChordScaleRandomizer: React.FC = () => {
         });
       });
     } else if (timbre === "guitar") {
-      // Guitar timbre - plucked string sound with harmonics
+      // Guitar timbre - plucked string sound with natural decay
       frequencies.forEach((freq) => {
         const osc1 = audioContext.current!.createOscillator();
         const osc2 = audioContext.current!.createOscillator();
@@ -552,29 +552,28 @@ const ChordScaleRandomizer: React.FC = () => {
         const baseLevel3 = 0.08;
         const baseLevel4 = 0.04;
 
-        // Quick attack for plucked sound
+        // Very quick attack for plucked sound
         const attackTime = 0.01;
+
+        // Natural decay time - same for all interval durations
+        const decayTime = 2.8; // Guitar-like natural decay
 
         gain1.gain.setValueAtTime(0, currentTime);
         gain2.gain.setValueAtTime(0, currentTime);
         gain3.gain.setValueAtTime(0, currentTime);
         gain4.gain.setValueAtTime(0, currentTime);
 
+        // Attack to peak
         gain1.gain.linearRampToValueAtTime(baseLevel1, currentTime + attackTime);
         gain2.gain.linearRampToValueAtTime(baseLevel2, currentTime + attackTime);
         gain3.gain.linearRampToValueAtTime(baseLevel3, currentTime + attackTime);
         gain4.gain.linearRampToValueAtTime(baseLevel4, currentTime + attackTime);
 
-        const sustainTime = releaseTime - 0.2;
-        gain1.gain.setValueAtTime(baseLevel1, currentTime + sustainTime);
-        gain2.gain.setValueAtTime(baseLevel2, currentTime + sustainTime);
-        gain3.gain.setValueAtTime(baseLevel3, currentTime + sustainTime);
-        gain4.gain.setValueAtTime(baseLevel4, currentTime + sustainTime);
-
-        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
-        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + releaseTime);
+        // Natural exponential decay from peak
+        gain1.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
+        gain4.gain.exponentialRampToValueAtTime(0.01, currentTime + attackTime + decayTime);
 
         // Add slight filtering for guitar-like tone
         const filter = audioContext.current!.createBiquadFilter();
