@@ -348,10 +348,8 @@ const ChordScaleRandomizer: React.FC = () => {
     }
   };
 
-  const playChord = (scaleDegree: ScaleDegree, duration: number = interval) => {
-    if (!audioContext.current || isMuted) return;
-
-    // Stop any currently playing oscillators
+  const stopChord = () => {
+    // Stop any currently playing oscillators immediately
     currentOscillators.current.forEach((osc) => {
       try {
         osc.stop();
@@ -360,6 +358,13 @@ const ChordScaleRandomizer: React.FC = () => {
       }
     });
     currentOscillators.current = [];
+  };
+
+  const playChord = (scaleDegree: ScaleDegree, duration: number = interval) => {
+    if (!audioContext.current || isMuted) return;
+
+    // Stop any currently playing oscillators
+    stopChord();
 
     // Resume audio context if suspended (required for user interaction)
     if (audioContext.current.state === "suspended") {
@@ -732,6 +737,9 @@ const ChordScaleRandomizer: React.FC = () => {
         setResults((prev) => [...prev, wasCorrect]);
       }
 
+      // Stop the chord immediately
+      stopChord();
+
       // Stop pitch detection when not playing
       stopPitchDetection();
     }
@@ -740,6 +748,7 @@ const ChordScaleRandomizer: React.FC = () => {
       if (intervalId.current) {
         clearInterval(intervalId.current);
       }
+      stopChord();
       stopPitchDetection();
     };
   }, [isPlaying, interval, selectedKey, mode, volume, isMuted]); // Include all audio settings
